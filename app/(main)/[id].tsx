@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  Image,
+} from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useMeals } from "../../context/MealsContext";
@@ -43,6 +50,9 @@ const DetailScreen = () => {
 
   return (
     <View style={styles.container}>
+      {meal.image && (
+        <Image source={{ uri: meal.image }} style={styles.mealImage} />
+      )}
       <Text style={styles.mealName}>{meal.name}</Text>
       <Text style={styles.mealCalories}>{meal.calories} kcal</Text>
       <View style={styles.buttonContainer}>
@@ -66,6 +76,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 16,
+  },
+  mealImage: {
+    width: 200,
+    height: 200,
+    marginBottom: 12,
   },
   mealName: {
     fontSize: 24,

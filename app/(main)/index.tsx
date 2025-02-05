@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   View,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -18,8 +19,13 @@ const HomeScreen = () => {
   const renderItem = ({ item }: { item: any }) => (
     <TouchableOpacity onPress={() => router.push(`/detail?id=${item.id}`)}>
       <View style={styles.mealItem}>
-        <Text style={styles.mealName}>{item.name}</Text>
-        <Text style={styles.mealCalories}>{item.calories} kcal</Text>
+        {item.image && (
+          <Image source={{ uri: item.image }} style={styles.mealImage} />
+        )}
+        <View style={styles.mealInfo}>
+          <Text style={styles.mealName}>{item.name}</Text>
+          <Text style={styles.mealCalories}>{item.calories} kcal</Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -55,6 +61,15 @@ const styles = StyleSheet.create({
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#ccc",
+  },
+  mealImage: {
+    width: 50,
+    height: 50,
+    marginRight: 16,
+  },
+  mealInfo: {
+    flex: 1,
+    justifyContent: "center",
   },
   mealName: {
     fontSize: 18,
