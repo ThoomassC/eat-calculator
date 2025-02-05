@@ -2,62 +2,51 @@ import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   FlatList,
-  Image,
+  Text,
   TouchableOpacity,
   SafeAreaView,
+  View,
 } from "react-native";
-import * as FileSystem from "expo-file-system";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { createTables, getMeals } from "../../libs/database";
 
 const HomeScreen = () => {
-  const [mediaFiles, setMediaFiles] = useState<string[]>([]);
+  const [meals, setMeals] = useState<any[]>([]);
   const router = useRouter();
 
   useEffect(() => {
-    (async () => {
-      const mediaDir = FileSystem.documentDirectory + "media/";
-      const files = await FileSystem.readDirectoryAsync(mediaDir);
-
-      const filesWithInfo = await Promise.all(
-        files.map(async (file) => {
-          const info = await FileSystem.getInfoAsync(mediaDir + file);
-          if (info.exists) {
-            return {
-              uri: mediaDir + file,
-              creationTime: info.modificationTime,
-            };
-          }
-          return null;
-        })
-      );
-
-      const validFiles = filesWithInfo.filter((file) => file !== null);
-      validFiles.sort((a, b) => a.creationTime - b.creationTime);
-
-      setMediaFiles(validFiles.map((file) => file.uri));
-    })();
+    createTables();
+    fetchMeals();
   }, []);
 
-  const renderItem = ({ item }: { item: string }) => (
-    <TouchableOpacity onPress={() => router.push(`/detail?file=${item}`)}>
-      <Image source={{ uri: item }} style={styles.media} />
+  const fetchMeals = () => {
+    getMeals((meals: any[]) => {
+      setMeals(meals);
+    });
+  };
+
+  const renderItem = ({ item }: { item: any }) => (
+    <TouchableOpacity onPress={() => router.push(`/detail?id=${item.id}`)}>
+      <View style={styles.mealItem}>
+        <Text style={styles.mealName}>{item.name}</Text>
+        <Text style={styles.mealCalories}>{item.calories} kcal</Text>
+      </View>
     </TouchableOpacity>
   );
 
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
-        data={mediaFiles}
+        data={meals}
         renderItem={renderItem}
-        keyExtractor={(item) => item}
-        numColumns={3}
+        keyExtractor={(item) => item.id.toString()}
       />
       <TouchableOpacity
-        style={styles.captureButton}
-        onPress={() => router.push("/camera")}
+        style={styles.addButton}
+        onPress={() => router.push("/add")}
       >
-        <Ionicons name="camera" size={24} color="white" />
+        <Ionicons name="add" size={24} color="white" />
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -71,19 +60,21 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     padding: 24,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#1a1a1a",
-    marginBottom: 32,
-    textAlign: "center",
+  mealItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
   },
-  media: {
-    width: 100,
-    height: 100,
-    margin: 5,
+  mealName: {
+    fontSize: 18,
   },
-  captureButton: {
+  mealCalories: {
+    fontSize: 18,
+    color: "#888",
+  },
+  addButton: {
     position: "absolute",
     bottom: 20,
     right: 20,
