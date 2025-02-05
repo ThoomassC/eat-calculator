@@ -17,7 +17,7 @@ const HomeScreen = () => {
   const router = useRouter();
 
   const renderItem = ({ item }: { item: any }) => (
-    <TouchableOpacity onPress={() => router.push(`/detail?id=${item.id}`)}>
+    <TouchableOpacity onPress={() => router.push(`/${item.id}`)}>
       <View style={styles.mealItem}>
         {item.image && (
           <Image source={{ uri: item.image }} style={styles.mealImage} />
