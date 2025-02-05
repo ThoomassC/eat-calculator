@@ -2,20 +2,18 @@ import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { getMealById, deleteMeal } from "../../libs/database";
+import { useMeals } from "../../context/MealsContext";
 
 const DetailScreen = () => {
   const { id } = useLocalSearchParams();
   const [meal, setMeal] = useState<any>(null);
   const router = useRouter();
+  const { meals, deleteMeal } = useMeals();
 
   useEffect(() => {
-    if (id) {
-      getMealById(parseInt(id as string), (meal: any) => {
-        setMeal(meal);
-      });
-    }
-  }, [id]);
+    const meal = meals.find((meal: any) => meal.id === parseInt(id as string));
+    setMeal(meal);
+  }, [id, meals]);
 
   const confirmDelete = () => {
     Alert.alert(

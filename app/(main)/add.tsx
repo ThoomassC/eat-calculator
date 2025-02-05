@@ -1,16 +1,18 @@
 import React, { useState } from "react";
 import { View, TextInput, Button, StyleSheet, Alert } from "react-native";
 import { useRouter } from "expo-router";
-import { insertMeal } from "../../libs/database";
+import { useMeals } from "../../context/MealsContext";
 
 const AddMealScreen = () => {
   const [name, setName] = useState("");
   const [calories, setCalories] = useState("");
   const router = useRouter();
+  const { addMeal } = useMeals();
 
   const handleAddMeal = () => {
     if (name && calories) {
-      insertMeal(name, parseInt(calories));
+      const newMeal = { id: Date.now(), name, calories: parseInt(calories) };
+      addMeal(newMeal);
       Alert.alert("Succès", "Repas ajouté avec succès !");
       router.push("/");
     } else {

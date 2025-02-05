@@ -2,10 +2,11 @@ import React, { useEffect } from "react";
 import { View, StyleSheet, LogBox } from "react-native";
 import { Camera } from "expo-camera";
 import * as MediaLibrary from "expo-media-library";
-import Header from "./header";
+import Header from "./(main)/header";
 import { Slot } from "expo-router";
 import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo";
 import { tokenCache } from "../libs/cache";
+import { MealsProvider } from "../context/MealsContext";
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
@@ -16,20 +17,23 @@ if (!publishableKey) {
 }
 
 // Ignore la barre d'erreur en bas de l'application
-// (Obligatoire car s'il existe une erreur elle s'affichera quand même)
 LogBox.ignoreAllLogs(true);
 
 const Layout = () => {
   useEffect(() => {
     (async () => {
-      const { status: cameraStatus } =
-        await Camera.requestCameraPermissionsAsync();
-      const { status: mediaLibraryStatus } =
-        await MediaLibrary.requestPermissionsAsync();
-      if (cameraStatus !== "granted" || mediaLibraryStatus !== "granted") {
-        alert(
-          "Désolé les permissions de la caméra et de la bibliothèque de médias sont nécessaires pour utiliser cette application."
-        );
+      try {
+        const { status: cameraStatus } =
+          await Camera.requestCameraPermissionsAsync();
+        const { status: mediaLibraryStatus } =
+          await MediaLibrary.requestPermissionsAsync();
+        if (cameraStatus !== "granted" || mediaLibraryStatus !== "granted") {
+          alert(
+            "Désolé, les permissions de la caméra et de la bibliothèque de médias sont nécessaires pour utiliser cette application."
+          );
+        }
+      } catch (error) {
+        console.error("Failed to request permissions:", error);
       }
     })();
   }, []);
@@ -37,10 +41,12 @@ const Layout = () => {
   return (
     <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
       <ClerkLoaded>
-        <View style={styles.container}>
-          <Header />
-          <Slot />
-        </View>
+        <MealsProvider>
+          <View style={styles.container}>
+            <Header />
+            <Slot />
+          </View>
+        </MealsProvider>
       </ClerkLoaded>
     </ClerkProvider>
   );

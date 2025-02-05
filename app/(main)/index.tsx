@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   StyleSheet,
   FlatList,
@@ -9,22 +9,11 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { createTables, getMeals } from "../../libs/database";
+import { useMeals } from "../../context/MealsContext";
 
 const HomeScreen = () => {
-  const [meals, setMeals] = useState<any[]>([]);
+  const { meals } = useMeals();
   const router = useRouter();
-
-  useEffect(() => {
-    createTables();
-    fetchMeals();
-  }, []);
-
-  const fetchMeals = () => {
-    getMeals((meals: any[]) => {
-      setMeals(meals);
-    });
-  };
 
   const renderItem = ({ item }: { item: any }) => (
     <TouchableOpacity onPress={() => router.push(`/detail?id=${item.id}`)}>
