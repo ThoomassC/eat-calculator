@@ -91,7 +91,7 @@ const MealForm: React.FC<MealFormProps> = ({
     }
 
     const newItem = {
-      id: Date.now().toString(),
+      id: Date.now(),
       name: food.food.label,
       calories: food.food.nutrients.ENERC_KCAL || 0, // Assurez-vous que les calories sont définies
       image: food.food.image,

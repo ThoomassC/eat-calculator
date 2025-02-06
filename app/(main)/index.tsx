@@ -50,7 +50,7 @@ const HomeScreen = () => {
                 </Text>
               </View>
             )}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(item) => item.id}
           />
         </View>
         {item.image && (
@@ -70,7 +70,7 @@ const HomeScreen = () => {
         <FlatList
           data={meals}
           renderItem={renderItem}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
         />
       )}

@@ -41,11 +41,11 @@ const CameraScreen = () => {
           : [];
 
         updatedItems.push({
-          id: Date.now().toString(), // Assurez-vous que l'id est une chaîne
+          id: Date.now(),
           name: food.food.label,
-          calories: food.food.nutrients.ENERC_KCAL || 0, // Assurez-vous que les calories sont définies
+          calories: food.food.nutrients.ENERC_KCAL || 0,
           image: food.food.image,
-          quantity: 1, // Ajoutez la quantité ici
+          quantity: 1,
         });
         router.push({
           pathname: returnTo === "edit" ? "/edit" : "/add",
