@@ -50,7 +50,7 @@ const HomeScreen = () => {
                 </Text>
               </View>
             )}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(item) => item.id}
           />
         </View>
         {item.image && (
@@ -62,12 +62,18 @@ const HomeScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <FlatList
-        data={meals}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.listContent}
-      />
+      {meals.length === 0 ? (
+        <View style={styles.noMealsContainer}>
+          <Text style={styles.noMealsText}>Aucun repas disponible</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={meals}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+        />
+      )}
       <TouchableOpacity
         style={styles.addButton}
         onPress={() => router.push("/add")}
@@ -166,5 +172,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
+  },
+  noMealsContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  noMealsText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    textAlign: "center",
   },
 });

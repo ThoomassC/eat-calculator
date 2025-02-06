@@ -124,7 +124,7 @@ const DetailScreen = () => {
             </View>
           </TouchableOpacity>
         )}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
       />
       <View style={styles.buttonContainer}>
