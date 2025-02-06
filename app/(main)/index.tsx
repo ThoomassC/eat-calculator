@@ -25,6 +25,19 @@ const HomeScreen = () => {
         <View style={styles.mealInfo}>
           <Text style={styles.mealName}>{item.name}</Text>
           <Text style={styles.mealCalories}>{item.calories} kcal</Text>
+          <FlatList
+            data={item.items}
+            renderItem={({ item }) => (
+              <View style={styles.foodItem}>
+                <Image source={{ uri: item.image }} style={styles.foodImage} />
+                <Text>
+                  {item.name} x {item.quantity} -{" "}
+                  {item.calories * item.quantity} kcal
+                </Text>
+              </View>
+            )}
+            keyExtractor={(item) => item.id.toString()}
+          />
         </View>
       </View>
     </TouchableOpacity>
@@ -77,6 +90,17 @@ const styles = StyleSheet.create({
   mealCalories: {
     fontSize: 18,
     color: "#888",
+  },
+  foodItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
+    borderBottomColor: "#ccc",
+  },
+  foodImage: {
+    width: 30,
+    height: 30,
+    marginRight: 10,
   },
   addButton: {
     position: "absolute",

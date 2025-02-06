@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Alert,
   Image,
+  FlatList,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -55,13 +56,21 @@ const DetailScreen = () => {
       )}
       <Text style={styles.mealName}>{meal.name}</Text>
       <Text style={styles.mealCalories}>{meal.calories} kcal</Text>
+      <FlatList
+        data={meal.items}
+        renderItem={({ item }) => (
+          <View style={styles.foodItem}>
+            <Image source={{ uri: item.image }} style={styles.foodImage} />
+            <Text style={styles.foodName}>{item.name}</Text>
+            <Text style={styles.foodCalories}>
+              {item.calories * item.quantity} kcal
+            </Text>
+            <Text>Quantité: {item.quantity}</Text>
+          </View>
+        )}
+        keyExtractor={(item) => item.id.toString()}
+      />
       <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => router.push("/")}
-        >
-          <Ionicons name="arrow-back" size={24} color="black" />
-        </TouchableOpacity>
         <TouchableOpacity style={styles.button} onPress={confirmDelete}>
           <Ionicons name="trash" size={24} color="black" />
         </TouchableOpacity>
@@ -90,6 +99,25 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: "#888",
     marginVertical: 8,
+  },
+  foodItem: {
+    flexDirection: "column",
+    alignItems: "center",
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+  },
+  foodImage: {
+    width: 50,
+    height: 50,
+    marginBottom: 5,
+  },
+  foodName: {
+    fontSize: 18,
+  },
+  foodCalories: {
+    fontSize: 16,
+    color: "#888",
   },
   buttonContainer: {
     flexDirection: "row",

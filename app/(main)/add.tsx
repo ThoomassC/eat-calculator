@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   TextInput,
@@ -17,37 +17,70 @@ import * as ImagePicker from "expo-image-picker";
 
 const AddMealScreen = () => {
   const [name, setName] = useState("");
-  const [calories, setCalories] = useState("");
   const [image, setImage] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [mealItems, setMealItems] = useState<any[]>([]);
   const router = useRouter();
   const { addMeal } = useMeals();
 
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => {
-      if (searchQuery) {
-        searchFood();
-      }
-    }, 300);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery]);
-
   const handleAddMeal = () => {
-    if (name && calories) {
-      const newMeal = {
-        id: Date.now(),
-        name,
-        calories: parseInt(calories),
-        image,
-      };
-      addMeal(newMeal);
-      Alert.alert("Succès", "Repas ajouté avec succès !");
-      router.push("/");
-    } else {
-      Alert.alert("Erreur", "Veuillez remplir tous les champs.");
+    if (!name.trim()) {
+      Alert.alert("Erreur", "Veuillez entrer un nom pour le repas.");
+      return;
     }
+
+    if (mealItems.length === 0) {
+      Alert.alert("Erreur", "Veuillez ajouter au moins un aliment.");
+      return;
+    }
+
+    const newMeal = {
+      id: Date.now(),
+      name,
+      calories: mealItems.reduce(
+        (total, item) => total + item.calories * item.quantity,
+        0
+      ),
+      image,
+      items: mealItems,
+    };
+    addMeal(newMeal);
+    Alert.alert("Succès", "Repas ajouté avec succès !");
+    router.push("/");
+  };
+
+  const addMealItem = (food: any) => {
+    const exists = mealItems.some((item) => item.name === food.food.label);
+    if (exists) {
+      Alert.alert("Erreur", "Cet aliment est déjà ajouté.");
+      return;
+    }
+
+    const newItem = {
+      id: Date.now(),
+      name: food.food.label,
+      calories: food.food.nutrients.ENERC_KCAL,
+      image: food.food.image,
+      quantity: 1,
+    };
+    setMealItems([...mealItems, newItem]);
+    setSearchResults([]);
+  };
+
+  const updateQuantity = (id: number, increment: boolean) => {
+    setMealItems((prevItems) =>
+      prevItems.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              quantity: increment
+                ? item.quantity + 1
+                : Math.max(1, item.quantity - 1),
+            }
+          : item
+      )
+    );
   };
 
   const pickImage = async () => {
@@ -83,12 +116,6 @@ const AddMealScreen = () => {
     setSearchResults(data.hints);
   };
 
-  const handleSelectFood = (food: any) => {
-    setName(food.food.label);
-    setCalories(food.food.nutrients.ENERC_KCAL.toString());
-    setSearchResults([]);
-  };
-
   return (
     <View style={styles.container}>
       <TextInput
@@ -99,31 +126,54 @@ const AddMealScreen = () => {
       />
       <TextInput
         style={styles.input}
-        placeholder="Calories"
-        value={calories}
-        onChangeText={setCalories}
-        keyboardType="numeric"
-      />
-      <TextInput
-        style={styles.input}
         placeholder="Rechercher un aliment"
         value={searchQuery}
         onChangeText={setSearchQuery}
       />
+      <Button title="Rechercher" onPress={searchFood} />
       <FlatList
         data={searchResults}
         renderItem={({ item }) => (
-          <TouchableHighlight onPress={() => handleSelectFood(item)}>
+          <TouchableHighlight onPress={() => addMealItem(item)}>
             <View style={styles.searchResultItem}>
               <Image
                 source={{ uri: item.food.image }}
                 style={styles.searchResultImage}
               />
-              <Text>{item.food.label}</Text>
+              <View style={styles.searchResultText}>
+                <Text>
+                  {item.food.label} - {item.food.nutrients.ENERC_KCAL} kcal
+                </Text>
+              </View>
             </View>
           </TouchableHighlight>
         )}
         keyExtractor={(item) => item.food.foodId}
+      />
+      <FlatList
+        data={mealItems}
+        renderItem={({ item }) => (
+          <View style={styles.mealItem}>
+            <Image source={{ uri: item.image }} style={styles.mealImage} />
+            <View style={styles.mealInfo}>
+              <Text>
+                {item.name} - {item.calories * item.quantity} kcal
+              </Text>
+              <View style={styles.quantityContainer}>
+                <TouchableOpacity
+                  onPress={() => updateQuantity(item.id, false)}
+                >
+                  <Text style={styles.quantityButton}>-</Text>
+                </TouchableOpacity>
+                <Text style={styles.quantityText}>{item.quantity}</Text>
+                <TouchableOpacity onPress={() => updateQuantity(item.id, true)}>
+                  <Text style={styles.quantityButton}>+</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        )}
+        keyExtractor={(item) => item.id.toString()}
       />
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
@@ -134,7 +184,7 @@ const AddMealScreen = () => {
         </TouchableOpacity>
       </View>
       {image && <Image source={{ uri: image }} style={styles.image} />}
-      <Button title="Ajouter" onPress={handleAddMeal} />
+      <Button title="Ajouter le repas" onPress={handleAddMeal} />
       <Button
         title="Scanner un code-barres"
         onPress={() => router.push("/camera")}
@@ -189,5 +239,35 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     marginRight: 10,
+  },
+  searchResultText: {
+    flexDirection: "column",
+  },
+  mealItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+  },
+  mealImage: {
+    width: 50,
+    height: 50,
+    marginRight: 10,
+  },
+  mealInfo: {
+    flex: 1,
+  },
+  quantityContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  quantityButton: {
+    fontSize: 20,
+    paddingHorizontal: 10,
+  },
+  quantityText: {
+    fontSize: 18,
+    marginHorizontal: 10,
   },
 });
