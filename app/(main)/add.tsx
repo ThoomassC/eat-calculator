@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   TextInput,
@@ -8,6 +8,8 @@ import {
   Image,
   TouchableOpacity,
   Text,
+  FlatList,
+  TouchableHighlight,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useMeals } from "../../context/MealsContext";
@@ -17,8 +19,20 @@ const AddMealScreen = () => {
   const [name, setName] = useState("");
   const [calories, setCalories] = useState("");
   const [image, setImage] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const router = useRouter();
   const { addMeal } = useMeals();
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (searchQuery) {
+        searchFood();
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
 
   const handleAddMeal = () => {
     if (name && calories) {
@@ -61,6 +75,20 @@ const AddMealScreen = () => {
     }
   };
 
+  const searchFood = async () => {
+    const response = await fetch(
+      `https://api.edamam.com/api/food-database/v2/parser?ingr=${searchQuery}&app_id=${process.env.EXPO_PUBLIC_API_EDAMAM_ID}&app_key=${process.env.EXPO_PUBLIC_API_EDAMAM_KEY}`
+    );
+    const data = await response.json();
+    setSearchResults(data.hints);
+  };
+
+  const handleSelectFood = (food: any) => {
+    setName(food.food.label);
+    setCalories(food.food.nutrients.ENERC_KCAL.toString());
+    setSearchResults([]);
+  };
+
   return (
     <View style={styles.container}>
       <TextInput
@@ -76,6 +104,27 @@ const AddMealScreen = () => {
         onChangeText={setCalories}
         keyboardType="numeric"
       />
+      <TextInput
+        style={styles.input}
+        placeholder="Rechercher un aliment"
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
+      <FlatList
+        data={searchResults}
+        renderItem={({ item }) => (
+          <TouchableHighlight onPress={() => handleSelectFood(item)}>
+            <View style={styles.searchResultItem}>
+              <Image
+                source={{ uri: item.food.image }}
+                style={styles.searchResultImage}
+              />
+              <Text>{item.food.label}</Text>
+            </View>
+          </TouchableHighlight>
+        )}
+        keyExtractor={(item) => item.food.foodId}
+      />
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
           <Text style={styles.imagePickerText}>Ajouter une photo</Text>
@@ -86,6 +135,10 @@ const AddMealScreen = () => {
       </View>
       {image && <Image source={{ uri: image }} style={styles.image} />}
       <Button title="Ajouter" onPress={handleAddMeal} />
+      <Button
+        title="Scanner un code-barres"
+        onPress={() => router.push("/camera")}
+      />
     </View>
   );
 };
@@ -124,5 +177,17 @@ const styles = StyleSheet.create({
     height: 200,
     marginBottom: 12,
     alignSelf: "center",
+  },
+  searchResultItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+  },
+  searchResultImage: {
+    width: 50,
+    height: 50,
+    marginRight: 10,
   },
 });

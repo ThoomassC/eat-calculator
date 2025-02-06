@@ -1,116 +1,83 @@
-import React, { useState, useRef } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Button,
-  Alert,
-} from "react-native";
-import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
-import * as FileSystem from "expo-file-system";
-import { useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+// import React, { useState, useEffect } from "react";
+// import { View, Text, StyleSheet, Alert, Button } from "react-native";
+// import { BarCodeScanner } from "expo-barcode-scanner";
+// import { useRouter } from "expo-router";
+// import { useMeals } from "../../context/MealsContext";
 
-const CameraScreen = () => {
-  const [facing, setFacing] = useState<CameraType>("back");
-  const [permission, requestPermission] = useCameraPermissions();
-  const cameraRef = useRef<CameraView>(null);
-  const router = useRouter();
+// const CameraScreen = () => {
+//   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+//   const [scanned, setScanned] = useState(false);
+//   const router = useRouter();
+//   const { addMeal } = useMeals();
 
-  if (!permission) {
-    // Camera permissions are still loading.
-    return <View />;
-  }
+//   useEffect(() => {
+//     const getBarCodeScannerPermissions = async () => {
+//       const { status } = await BarCodeScanner.requestPermissionsAsync();
+//       setHasPermission(status === "granted");
+//     };
 
-  if (!permission.granted) {
-    // Camera permissions are not granted yet.
-    return (
-      <View style={styles.container}>
-        <Text style={styles.message}>
-          We need your permission to show the camera
-        </Text>
-        <Button onPress={requestPermission} title="grant permission" />
-      </View>
-    );
-  }
+//     getBarCodeScannerPermissions();
+//   }, []);
 
-  const takePicture = async () => {
-    try {
-      if (cameraRef.current) {
-        const photo = await cameraRef.current.takePictureAsync();
-        if (photo) {
-          const mediaDir = FileSystem.documentDirectory + "media/";
-          await FileSystem.makeDirectoryAsync(mediaDir, {
-            intermediates: true,
-          });
-          await FileSystem.moveAsync({
-            from: photo.uri,
-            to: mediaDir + Date.now() + ".jpg",
-          });
-          Alert.alert("Success", "Photo prise avec succès !");
-          router.push("/");
-        }
-      }
-    } catch (error) {
-      Alert.alert("Error", (error as Error).message);
-    }
-  };
+//   const handleBarCodeScanned = async ({
+//     type,
+//     data,
+//   }: {
+//     type: string;
+//     data: string;
+//   }) => {
+//     setScanned(true);
 
-  const toggleCameraFacing = () => {
-    setFacing((current) => (current === "back" ? "front" : "back"));
-  };
+//     const API_KEY = process.env.EXPO_PUBLIC_API_EDAMAM_ID;
+//     console.log("API_KEY", API_KEY);
+//     const response = await fetch(
+//       `https://api.edamam.com/api/food-database/v2/parser?upc=${data}&app_id=${process
+//         .env.EXPO_PUBLIC_API_EDAMAM_ID!}&app_key=${process.env.EXPO_PUBLIC_API_EDAMAM_KEY!}`
+//     );
+//     const result = await response.json();
+//     if (result.hints.length > 0) {
+//       const food = result.hints[0].food;
+//       const newMeal = {
+//         id: Date.now(),
+//         name: food.label,
+//         calories: food.nutrients.ENERC_KCAL,
+//         image: null,
+//       };
+//       addMeal(newMeal);
+//       Alert.alert("Succès", "Repas ajouté avec succès !");
+//       router.push("/");
+//     } else {
+//       Alert.alert("Erreur", "Produit non reconnu.");
+//       setScanned(false);
+//     }
+//   };
 
-  return (
-    <View style={styles.container}>
-      <CameraView style={styles.camera} facing={facing} ref={cameraRef}>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
-            <Ionicons name="camera-reverse" size={24} color="white" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={takePicture}>
-            <Ionicons name="camera" size={24} color="white" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => router.push("/")}
-          >
-            <Ionicons name="arrow-back" size={24} color="white" />
-          </TouchableOpacity>
-        </View>
-      </CameraView>
-    </View>
-  );
-};
+//   if (hasPermission === null) {
+//     return <Text>Demande de permission de la caméra</Text>;
+//   }
+//   if (hasPermission === false) {
+//     return <Text>Accès à la caméra refusé</Text>;
+//   }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-  },
-  message: {
-    textAlign: "center",
-    paddingBottom: 10,
-  },
-  camera: {
-    flex: 1,
-  },
-  buttonContainer: {
-    flex: 1,
-    flexDirection: "row",
-    backgroundColor: "transparent",
-    margin: 64,
-  },
-  button: {
-    flex: 1,
-    alignSelf: "flex-end",
-    alignItems: "center",
-  },
-  text: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "white",
-  },
-});
+//   return (
+//     <View style={styles.container}>
+//       <BarCodeScanner
+//         onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+//         style={StyleSheet.absoluteFillObject}
+//       />
+//       {scanned && (
+//         <Button title="Scanner à nouveau" onPress={() => setScanned(false)} />
+//       )}
+//     </View>
+//   );
+// };
 
-export default CameraScreen;
+// export default CameraScreen;
+
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     justifyContent: "center",
+//     alignItems: "center",
+//   },
+// });

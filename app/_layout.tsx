@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { View, StyleSheet, LogBox } from "react-native";
 import { Camera } from "expo-camera";
 import * as MediaLibrary from "expo-media-library";
-import Header from "./(main)/header";
+import Header from "../components/header";
 import { Slot } from "expo-router";
 import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo";
 import { tokenCache } from "../libs/cache";
