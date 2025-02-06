@@ -7,6 +7,7 @@ import {
   Alert,
   Image,
   FlatList,
+  Modal,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,6 +16,9 @@ import { useMeals } from "../../context/MealsContext";
 const DetailScreen = () => {
   const { id } = useLocalSearchParams();
   const [meal, setMeal] = useState<any>(null);
+  const [selectedFood, setSelectedFood] = useState<any>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [foodDetails, setFoodDetails] = useState<any>(null);
   const router = useRouter();
   const { meals, deleteMeal } = useMeals();
 
@@ -45,6 +49,36 @@ const DetailScreen = () => {
     );
   };
 
+  const fetchFoodDetails = async (food: any) => {
+    try {
+      const response = await fetch(
+        `https://api.edamam.com/api/food-database/v2/parser?ingr=${food.name}&app_id=${process.env.EXPO_PUBLIC_API_EDAMAM_ID}&app_key=${process.env.EXPO_PUBLIC_API_EDAMAM_KEY}`
+      );
+      const data = await response.json();
+      const foodData = data.hints[0].food.nutrients;
+      setFoodDetails({
+        calories: foodData.ENERC_KCAL * food.quantity,
+        proteins: foodData.PROCNT * food.quantity,
+        carbs: foodData.CHOCDF * food.quantity,
+        fats: foodData.FAT * food.quantity,
+      });
+    } catch (error) {
+      console.error("Failed to fetch food details", error);
+    }
+  };
+
+  const openModal = (food: any) => {
+    setSelectedFood(food);
+    fetchFoodDetails(food);
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setSelectedFood(null);
+    setFoodDetails(null);
+    setModalVisible(false);
+  };
+
   if (!meal) {
     return null;
   }
@@ -59,25 +93,29 @@ const DetailScreen = () => {
       <FlatList
         data={meal.items}
         renderItem={({ item }) => (
-          <View style={styles.foodItem}>
-            {item.image ? (
-              <Image source={{ uri: item.image }} style={styles.foodImage} />
-            ) : (
-              <Ionicons
-                name="image-outline"
-                size={50}
-                color="#ccc"
-                style={styles.defaultFoodImage}
-              />
-            )}
-            <View style={styles.foodInfo}>
-              <Text style={styles.foodName}>{item.name}</Text>
-              <Text style={styles.foodCalories}>
-                {item.calories * item.quantity} kcal
-              </Text>
-              <Text style={styles.foodQuantity}>Quantité: {item.quantity}</Text>
+          <TouchableOpacity onPress={() => openModal(item)}>
+            <View style={styles.foodItem}>
+              {item.image ? (
+                <Image source={{ uri: item.image }} style={styles.foodImage} />
+              ) : (
+                <Ionicons
+                  name="image-outline"
+                  size={50}
+                  color="#ccc"
+                  style={styles.defaultFoodImage}
+                />
+              )}
+              <View style={styles.foodInfo}>
+                <Text style={styles.foodName}>{item.name}</Text>
+                <Text style={styles.foodCalories}>
+                  {item.calories * item.quantity} kcal
+                </Text>
+                <Text style={styles.foodQuantity}>
+                  Quantité: {item.quantity}
+                </Text>
+              </View>
             </View>
-          </View>
+          </TouchableOpacity>
         )}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.listContent}
@@ -87,6 +125,57 @@ const DetailScreen = () => {
           <Ionicons name="trash" size={24} color="white" />
         </TouchableOpacity>
       </View>
+
+      {selectedFood && foodDetails && (
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={closeModal}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>
+                {selectedFood.name} x{selectedFood.quantity}
+              </Text>
+              <Text>Calories: {foodDetails.calories} kcal</Text>
+              <View style={styles.chipsContainer}>
+                <View style={[styles.chip, styles.proteinChip]}>
+                  <Text style={styles.chipText}>
+                    Protéines: {foodDetails.proteins} g
+                  </Text>
+                </View>
+                <View style={[styles.chip, styles.carbChip]}>
+                  <Text style={styles.chipText}>
+                    Glucides: {foodDetails.carbs} g
+                  </Text>
+                </View>
+                <View style={[styles.chip, styles.fatChip]}>
+                  <Text style={styles.chipText}>
+                    Lipides: {foodDetails.fats} g
+                  </Text>
+                </View>
+              </View>
+              {selectedFood.image ? (
+                <Image
+                  source={{ uri: selectedFood.image }}
+                  style={styles.modalImage}
+                />
+              ) : (
+                <Ionicons
+                  name="image-outline"
+                  size={100}
+                  color="#ccc"
+                  style={styles.defaultModalImage}
+                />
+              )}
+              <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
+                <Text style={styles.closeButtonText}>Fermer</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 };
@@ -181,6 +270,76 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    width: 350,
+    padding: 20,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  chipsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    flexWrap: "wrap",
+    width: "100%",
+    marginVertical: 10,
+  },
+  chip: {
+    padding: 8,
+    borderRadius: 16,
+    margin: 4,
+    maxWidth: "45%",
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  proteinChip: {
+    backgroundColor: "#FFCDD2",
+  },
+  carbChip: {
+    backgroundColor: "#C8E6C9",
+  },
+  fatChip: {
+    backgroundColor: "#BBDEFB",
+  },
+  chipText: {
+    fontSize: 14,
+    color: "#333",
+  },
+  modalImage: {
+    width: 100,
+    height: 100,
+    marginVertical: 10,
+    borderRadius: 8,
+  },
+  defaultModalImage: {
+    width: 100,
+    height: 100,
+    marginVertical: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  closeButton: {
+    marginTop: 20,
+    backgroundColor: "#2196F3",
+    padding: 10,
+    borderRadius: 8,
+  },
+  closeButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
 

@@ -17,6 +17,7 @@ export default function AuthRoutesLayout() {
         name="index"
         options={{
           title: "Vos repas",
+          headerBackVisible: false,
           headerRight: () => (
             <TouchableOpacity
               onPress={() => router.push("/profile")}
