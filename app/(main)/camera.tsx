@@ -25,27 +25,45 @@ const CameraScreen = () => {
   }) => {
     setScanned(true);
 
-    const response = await fetch(
-      `https://api.edamam.com/api/food-database/v2/parser?upc=${data}&app_id=${process.env.EXPO_PUBLIC_API_EDAMAM_ID}&app_key=${process.env.EXPO_PUBLIC_API_EDAMAM_KEY}`
-    );
-    const result = await response.json();
-    if (result.hints.length > 0) {
-      const food = result.hints[0];
-      const updatedItems = existingItems
-        ? JSON.parse(
-            Array.isArray(existingItems) ? existingItems[0] : existingItems
-          )
-        : [];
-      updatedItems.push(food);
-      router.push({
-        pathname: returnTo === "edit" ? "/edit" : "/add",
-        params: {
-          scannedFood: JSON.stringify(food),
-          existingItems: JSON.stringify(updatedItems),
-        },
-      });
-    } else {
-      Alert.alert("Erreur", "Aucun aliment trouvé pour ce code-barres.");
+    try {
+      const response = await fetch(
+        `https://api.edamam.com/api/food-database/v2/parser?upc=${data}&app_id=${process.env.EXPO_PUBLIC_API_EDAMAM_ID}&app_key=${process.env.EXPO_PUBLIC_API_EDAMAM_KEY}`
+      );
+      const result = await response.json();
+
+      if (result.hints && result.hints.length > 0) {
+        const food = result.hints[0];
+
+        const updatedItems = existingItems
+          ? JSON.parse(
+              Array.isArray(existingItems) ? existingItems[0] : existingItems
+            )
+          : [];
+
+        updatedItems.push({
+          id: Date.now().toString(), // Assurez-vous que l'id est une chaîne
+          name: food.food.label,
+          calories: food.food.nutrients.ENERC_KCAL || 0, // Assurez-vous que les calories sont définies
+          image: food.food.image,
+          quantity: 1, // Ajoutez la quantité ici
+        });
+        router.push({
+          pathname: returnTo === "edit" ? "/edit" : "/add",
+          params: {
+            scannedFood: JSON.stringify(food),
+            existingItems: JSON.stringify(updatedItems),
+          },
+        });
+      } else {
+        Alert.alert("Erreur", "Aucun aliment trouvé pour ce code-barres.");
+        setScanned(false);
+      }
+    } catch (error) {
+      console.error("Failed to fetch food data:", error);
+      Alert.alert(
+        "Erreur",
+        "Une erreur s'est produite lors de la récupération des données."
+      );
       setScanned(false);
     }
   };
