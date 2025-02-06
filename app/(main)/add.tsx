@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import {
   View,
   TextInput,
-  Button,
   StyleSheet,
   Alert,
   Image,
@@ -14,6 +13,7 @@ import {
 import { useRouter } from "expo-router";
 import { useMeals } from "../../context/MealsContext";
 import * as ImagePicker from "expo-image-picker";
+import { Ionicons } from "@expo/vector-icons";
 
 const AddMealScreen = () => {
   const [name, setName] = useState("");
@@ -113,7 +113,16 @@ const AddMealScreen = () => {
       `https://api.edamam.com/api/food-database/v2/parser?ingr=${searchQuery}&app_id=${process.env.EXPO_PUBLIC_API_EDAMAM_ID}&app_key=${process.env.EXPO_PUBLIC_API_EDAMAM_KEY}`
     );
     const data = await response.json();
-    setSearchResults(data.hints);
+    const filteredResults = data.hints.filter(
+      (item: any) =>
+        !mealItems.some((mealItem) => mealItem.name === item.food.label)
+    );
+    setSearchResults(filteredResults);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery("");
+    setSearchResults([]);
   };
 
   return (
@@ -124,32 +133,57 @@ const AddMealScreen = () => {
         value={name}
         onChangeText={setName}
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Rechercher un aliment"
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-      />
-      <Button title="Rechercher" onPress={searchFood} />
-      <FlatList
-        data={searchResults}
-        renderItem={({ item }) => (
-          <TouchableHighlight onPress={() => addMealItem(item)}>
-            <View style={styles.searchResultItem}>
-              <Image
-                source={{ uri: item.food.image }}
-                style={styles.searchResultImage}
-              />
-              <View style={styles.searchResultText}>
-                <Text>
-                  {item.food.label} - {item.food.nutrients.ENERC_KCAL} kcal
-                </Text>
-              </View>
-            </View>
-          </TouchableHighlight>
-        )}
-        keyExtractor={(item) => item.food.foodId}
-      />
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Rechercher un aliment"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+        {searchQuery ? (
+          <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+            <Ionicons name="close-circle" size={24} color="#ccc" />
+          </TouchableOpacity>
+        ) : null}
+        <TouchableOpacity style={styles.searchButton} onPress={searchFood}>
+          <Text style={styles.searchButtonText}>Rechercher</Text>
+        </TouchableOpacity>
+      </View>
+      {searchResults.length > 0 && (
+        <>
+          <Text style={styles.sectionTitle}>Suggestions</Text>
+          <FlatList
+            data={searchResults}
+            renderItem={({ item, index }) => (
+              <TouchableHighlight onPress={() => addMealItem(item)}>
+                <View style={styles.searchResultItem}>
+                  {item.food.image ? (
+                    <Image
+                      source={{ uri: item.food.image }}
+                      style={styles.searchResultImage}
+                    />
+                  ) : (
+                    <Ionicons
+                      name="image-outline"
+                      size={50}
+                      color="#ccc"
+                      style={styles.searchResultImage}
+                    />
+                  )}
+                  <View style={styles.searchResultText}>
+                    <Text>
+                      {item.food.label} - {item.food.nutrients.ENERC_KCAL} kcal
+                    </Text>
+                  </View>
+                </View>
+              </TouchableHighlight>
+            )}
+            keyExtractor={(item, index) => `${item.food.foodId}-${index}`}
+            style={styles.flatList}
+          />
+        </>
+      )}
+      <Text style={styles.sectionTitle}>Aliments choisis</Text>
       <FlatList
         data={mealItems}
         renderItem={({ item }) => (
@@ -162,18 +196,23 @@ const AddMealScreen = () => {
               <View style={styles.quantityContainer}>
                 <TouchableOpacity
                   onPress={() => updateQuantity(item.id, false)}
+                  style={styles.quantityButton}
                 >
-                  <Text style={styles.quantityButton}>-</Text>
+                  <Text style={styles.quantityButtonText}>-</Text>
                 </TouchableOpacity>
                 <Text style={styles.quantityText}>{item.quantity}</Text>
-                <TouchableOpacity onPress={() => updateQuantity(item.id, true)}>
-                  <Text style={styles.quantityButton}>+</Text>
+                <TouchableOpacity
+                  onPress={() => updateQuantity(item.id, true)}
+                  style={styles.quantityButton}
+                >
+                  <Text style={styles.quantityButtonText}>+</Text>
                 </TouchableOpacity>
               </View>
             </View>
           </View>
         )}
         keyExtractor={(item) => item.id.toString()}
+        style={styles.flatList}
       />
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
@@ -184,11 +223,15 @@ const AddMealScreen = () => {
         </TouchableOpacity>
       </View>
       {image && <Image source={{ uri: image }} style={styles.image} />}
-      <Button title="Ajouter le repas" onPress={handleAddMeal} />
-      <Button
-        title="Scanner un code-barres"
+      <TouchableOpacity style={styles.addButton} onPress={handleAddMeal}>
+        <Text style={styles.addButtonText}>Ajouter le repas</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.scanButton}
         onPress={() => router.push("/camera")}
-      />
+      >
+        <Text style={styles.scanButtonText}>Scanner un code-barres</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -200,6 +243,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     padding: 16,
+    backgroundColor: "#f5f5f5",
   },
   input: {
     height: 40,
@@ -207,38 +251,86 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 12,
     paddingHorizontal: 8,
+    borderRadius: 8,
+    backgroundColor: "#fff",
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  searchInput: {
+    flex: 1,
+    height: 40,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    backgroundColor: "#fff",
+  },
+  clearButton: {
+    marginLeft: 8,
+  },
+  searchButton: {
+    backgroundColor: "#4CAF50",
+    padding: 12,
+    borderRadius: 8,
+    marginLeft: 8,
+  },
+  searchButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 8,
+    marginTop: 16,
+  },
+  flatList: {
+    marginBottom: 12,
   },
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
     marginBottom: 12,
+    marginTop: 12,
   },
   imagePicker: {
-    backgroundColor: "#87CEEB",
+    backgroundColor: "#2196F3",
     padding: 10,
     alignItems: "center",
+    borderRadius: 8,
     marginBottom: 12,
   },
   imagePickerText: {
     color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
   },
   image: {
     width: 200,
     height: 200,
     marginBottom: 12,
     alignSelf: "center",
+    borderRadius: 8,
   },
   searchResultItem: {
     flexDirection: "row",
     alignItems: "center",
     padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#000",
   },
   searchResultImage: {
     width: 50,
     height: 50,
     marginRight: 10,
+    borderRadius: 8,
   },
   searchResultText: {
     flexDirection: "column",
@@ -247,13 +339,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#4CAF50",
   },
   mealImage: {
     width: 50,
     height: 50,
     marginRight: 10,
+    borderRadius: 8,
   },
   mealInfo: {
     flex: 1,
@@ -263,11 +359,42 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   quantityButton: {
-    fontSize: 20,
-    paddingHorizontal: 10,
+    backgroundColor: "#FF5722",
+    padding: 8,
+    borderRadius: 8,
+    marginHorizontal: 4,
+  },
+  quantityButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
   quantityText: {
     fontSize: 18,
     marginHorizontal: 10,
+  },
+  addButton: {
+    backgroundColor: "#4CAF50",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  addButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  scanButton: {
+    backgroundColor: "#FF5722",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  scanButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
