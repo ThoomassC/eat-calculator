@@ -15,15 +15,28 @@ import { useMeals } from "../../context/MealsContext";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 
-const AddMealScreen = () => {
-  const [name, setName] = useState("");
-  const [image, setImage] = useState<string | null>(null);
+const EditMealScreen = () => {
+  const {
+    meal: mealParam,
+    scannedFood,
+    existingItems,
+  } = useLocalSearchParams();
+  let initialMeal;
+  try {
+    initialMeal = mealParam
+      ? JSON.parse(mealParam as string)
+      : { name: "", image: null, items: [] };
+  } catch (error) {
+    console.error("Failed to parse mealParam", error);
+    initialMeal = { name: "", image: null, items: [] };
+  }
+  const [name, setName] = useState(initialMeal.name);
+  const [image, setImage] = useState<string | null>(initialMeal.image);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [mealItems, setMealItems] = useState<any[]>([]);
+  const [mealItems, setMealItems] = useState<any[]>(initialMeal.items);
   const router = useRouter();
-  const { addMeal } = useMeals();
-  const { scannedFood, existingItems } = useLocalSearchParams();
+  const { updateMeal } = useMeals();
 
   useEffect(() => {
     if (existingItems) {
@@ -34,14 +47,18 @@ const AddMealScreen = () => {
       );
     }
     if (scannedFood) {
-      const food = JSON.parse(
-        Array.isArray(scannedFood) ? scannedFood[0] : scannedFood
-      );
-      addMealItem(food);
+      try {
+        const food = JSON.parse(
+          Array.isArray(scannedFood) ? scannedFood[0] : scannedFood
+        );
+        addMealItem(food);
+      } catch (error) {
+        console.error("Failed to parse scannedFood", error);
+      }
     }
   }, [scannedFood, existingItems]);
 
-  const handleAddMeal = () => {
+  const handleUpdateMeal = () => {
     if (!name.trim()) {
       Alert.alert("Erreur", "Veuillez entrer un nom pour le repas.");
       return;
@@ -52,8 +69,8 @@ const AddMealScreen = () => {
       return;
     }
 
-    const newMeal = {
-      id: Date.now(),
+    const updatedMeal = {
+      ...initialMeal,
       name,
       calories: mealItems.reduce(
         (total, item) => total + item.calories * item.quantity,
@@ -62,8 +79,8 @@ const AddMealScreen = () => {
       image,
       items: mealItems,
     };
-    addMeal(newMeal);
-    Alert.alert("Succès", "Repas ajouté avec succès !");
+    updateMeal(updatedMeal);
+    Alert.alert("Succès", "Repas modifié avec succès !");
     router.push("/");
   };
 
@@ -75,21 +92,21 @@ const AddMealScreen = () => {
     }
 
     const newItem = {
-      id: Date.now(),
+      id: Date.now().toString(),
       name: food.food.label,
       calories: food.food.nutrients.ENERC_KCAL,
       image: food.food.image,
       quantity: 1,
     };
-    setMealItems([...mealItems, newItem]);
+    setMealItems((prevItems) => [...prevItems, newItem]);
     setSearchResults([]);
   };
 
-  const removeMealItem = (id: number) => {
+  const removeMealItem = (id: string) => {
     setMealItems((prevItems) => prevItems.filter((item) => item.id !== id));
   };
 
-  const updateQuantity = (id: number, increment: boolean) => {
+  const updateQuantity = (id: string, increment: boolean) => {
     setMealItems((prevItems) =>
       prevItems.map((item) =>
         item.id === id
@@ -175,7 +192,7 @@ const AddMealScreen = () => {
             router.push({
               pathname: "/camera",
               params: {
-                returnTo: "add",
+                returnTo: "edit",
                 existingItems: JSON.stringify(mealItems),
               },
             })
@@ -287,14 +304,14 @@ const AddMealScreen = () => {
         </TouchableOpacity>
       </View>
       {image && <Image source={{ uri: image }} style={styles.image} />}
-      <TouchableOpacity style={styles.addButton} onPress={handleAddMeal}>
-        <Text style={styles.addButtonText}>Ajouter le repas</Text>
+      <TouchableOpacity style={styles.addButton} onPress={handleUpdateMeal}>
+        <Text style={styles.addButtonText}>Modifier le repas</Text>
       </TouchableOpacity>
     </View>
   );
 };
 
-export default AddMealScreen;
+export default EditMealScreen;
 
 const styles = StyleSheet.create({
   container: {

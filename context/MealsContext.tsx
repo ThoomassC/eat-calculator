@@ -41,7 +41,22 @@ export const MealsProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const value = React.useMemo(() => ({ meals, addMeal, deleteMeal }), [meals]);
+  const updateMeal = async (updatedMeal: any) => {
+    try {
+      const updatedMeals = meals.map((meal) =>
+        meal.id === updatedMeal.id ? updatedMeal : meal
+      );
+      setMeals(updatedMeals);
+      await AsyncStorage.setItem("meals", JSON.stringify(updatedMeals));
+    } catch (error) {
+      console.error("Failed to update meal in AsyncStorage", error);
+    }
+  };
+
+  const value = React.useMemo(
+    () => ({ meals, addMeal, deleteMeal, updateMeal }),
+    [meals]
+  );
 
   return (
     <MealsContext.Provider value={value}>{children}</MealsContext.Provider>

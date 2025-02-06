@@ -79,6 +79,13 @@ const DetailScreen = () => {
     setModalVisible(false);
   };
 
+  const navigateToEdit = () => {
+    router.push({
+      pathname: "/edit",
+      params: { meal: JSON.stringify(meal) },
+    });
+  };
+
   if (!meal) {
     return null;
   }
@@ -121,8 +128,11 @@ const DetailScreen = () => {
         contentContainerStyle={styles.listContent}
       />
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={confirmDelete}>
+        <TouchableOpacity style={styles.deleteButton} onPress={confirmDelete}>
           <Ionicons name="trash" size={24} color="white" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.editButton} onPress={navigateToEdit}>
+          <Ionicons name="pencil" size={24} color="white" />
         </TouchableOpacity>
       </View>
 
@@ -255,12 +265,24 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: "row",
-    justifyContent: "center",
+    justifyContent: "space-around",
     width: "100%",
     padding: 20,
   },
-  button: {
+  deleteButton: {
     backgroundColor: "red",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  editButton: {
+    backgroundColor: "green",
     padding: 12,
     borderRadius: 8,
     alignItems: "center",

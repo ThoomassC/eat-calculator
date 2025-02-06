@@ -56,6 +56,20 @@ export default function AuthRoutesLayout() {
           ),
         }}
       />
+      <Stack.Screen
+        name="edit"
+        options={{
+          title: "Modification d'un repas",
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => router.push("/profile")}
+              style={{ padding: 8 }}
+            >
+              <Ionicons name="person-circle-outline" size={32} color="black" />
+            </TouchableOpacity>
+          ),
+        }}
+      />
     </Stack>
   );
 }

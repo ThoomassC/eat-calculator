@@ -1,83 +1,98 @@
-// import React, { useState, useEffect } from "react";
-// import { View, Text, StyleSheet, Alert, Button } from "react-native";
-// import { BarCodeScanner } from "expo-barcode-scanner";
-// import { useRouter } from "expo-router";
-// import { useMeals } from "../../context/MealsContext";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, Alert, Button } from "react-native";
+import { Camera, CameraView } from "expo-camera";
+import { useRouter, useLocalSearchParams } from "expo-router";
 
-// const CameraScreen = () => {
-//   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-//   const [scanned, setScanned] = useState(false);
-//   const router = useRouter();
-//   const { addMeal } = useMeals();
+const CameraScreen = () => {
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [scanned, setScanned] = useState(false);
+  const router = useRouter();
+  const { returnTo, existingItems } = useLocalSearchParams();
 
-//   useEffect(() => {
-//     const getBarCodeScannerPermissions = async () => {
-//       const { status } = await BarCodeScanner.requestPermissionsAsync();
-//       setHasPermission(status === "granted");
-//     };
+  useEffect(() => {
+    (async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      setHasPermission(status === "granted");
+    })();
+  }, []);
 
-//     getBarCodeScannerPermissions();
-//   }, []);
+  const handleBarCodeScanned = async ({
+    type,
+    data,
+  }: {
+    type: string;
+    data: string;
+  }) => {
+    setScanned(true);
 
-//   const handleBarCodeScanned = async ({
-//     type,
-//     data,
-//   }: {
-//     type: string;
-//     data: string;
-//   }) => {
-//     setScanned(true);
+    const response = await fetch(
+      `https://api.edamam.com/api/food-database/v2/parser?upc=${data}&app_id=${process.env.EXPO_PUBLIC_API_EDAMAM_ID}&app_key=${process.env.EXPO_PUBLIC_API_EDAMAM_KEY}`
+    );
+    const result = await response.json();
+    if (result.hints.length > 0) {
+      const food = result.hints[0];
+      const updatedItems = existingItems
+        ? JSON.parse(
+            Array.isArray(existingItems) ? existingItems[0] : existingItems
+          )
+        : [];
+      updatedItems.push(food);
+      router.push({
+        pathname: returnTo === "edit" ? "/edit" : "/add",
+        params: {
+          scannedFood: JSON.stringify(food),
+          existingItems: JSON.stringify(updatedItems),
+        },
+      });
+    } else {
+      Alert.alert("Erreur", "Aucun aliment trouvé pour ce code-barres.");
+      setScanned(false);
+    }
+  };
 
-//     const API_KEY = process.env.EXPO_PUBLIC_API_EDAMAM_ID;
-//     console.log("API_KEY", API_KEY);
-//     const response = await fetch(
-//       `https://api.edamam.com/api/food-database/v2/parser?upc=${data}&app_id=${process
-//         .env.EXPO_PUBLIC_API_EDAMAM_ID!}&app_key=${process.env.EXPO_PUBLIC_API_EDAMAM_KEY!}`
-//     );
-//     const result = await response.json();
-//     if (result.hints.length > 0) {
-//       const food = result.hints[0].food;
-//       const newMeal = {
-//         id: Date.now(),
-//         name: food.label,
-//         calories: food.nutrients.ENERC_KCAL,
-//         image: null,
-//       };
-//       addMeal(newMeal);
-//       Alert.alert("Succès", "Repas ajouté avec succès !");
-//       router.push("/");
-//     } else {
-//       Alert.alert("Erreur", "Produit non reconnu.");
-//       setScanned(false);
-//     }
-//   };
+  if (hasPermission === null) {
+    return <Text>Demande de permission pour accéder à la caméra</Text>;
+  }
+  if (hasPermission === false) {
+    return <Text>Accès à la caméra refusé</Text>;
+  }
 
-//   if (hasPermission === null) {
-//     return <Text>Demande de permission de la caméra</Text>;
-//   }
-//   if (hasPermission === false) {
-//     return <Text>Accès à la caméra refusé</Text>;
-//   }
+  return (
+    <View style={styles.container}>
+      <CameraView
+        onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+        style={StyleSheet.absoluteFillObject}
+        barcodeScannerSettings={{
+          barcodeTypes: [
+            "ean13",
+            "ean8",
+            "upc_a",
+            "upc_e",
+            "code39",
+            "code93",
+            "code128",
+            "qr",
+            "pdf417",
+            "aztec",
+            "datamatrix",
+            "itf14",
+            "codabar",
+          ],
+        }}
+      />
+      {scanned && (
+        <Button title="Scanner à nouveau" onPress={() => setScanned(false)} />
+      )}
+    </View>
+  );
+};
 
-//   return (
-//     <View style={styles.container}>
-//       <BarCodeScanner
-//         onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-//         style={StyleSheet.absoluteFillObject}
-//       />
-//       {scanned && (
-//         <Button title="Scanner à nouveau" onPress={() => setScanned(false)} />
-//       )}
-//     </View>
-//   );
-// };
+export default CameraScreen;
 
-// export default CameraScreen;
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     justifyContent: "center",
-//     alignItems: "center",
-//   },
-// });
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+});
