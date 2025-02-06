@@ -148,8 +148,14 @@ const AddMealScreen = () => {
         <TouchableOpacity style={styles.searchButton} onPress={searchFood}>
           <Text style={styles.searchButtonText}>Rechercher</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.scanButton}
+          onPress={() => router.push("/camera")}
+        >
+          <Ionicons name="barcode-outline" size={24} color="#fff" />
+        </TouchableOpacity>
       </View>
-      {searchResults.length > 0 && (
+      {searchResults.length > 0 ? (
         <>
           <Text style={styles.sectionTitle}>Suggestions</Text>
           <FlatList
@@ -182,38 +188,41 @@ const AddMealScreen = () => {
             style={styles.flatList}
           />
         </>
-      )}
-      <Text style={styles.sectionTitle}>Aliments choisis</Text>
-      <FlatList
-        data={mealItems}
-        renderItem={({ item }) => (
-          <View style={styles.mealItem}>
-            <Image source={{ uri: item.image }} style={styles.mealImage} />
-            <View style={styles.mealInfo}>
-              <Text>
-                {item.name} - {item.calories * item.quantity} kcal
-              </Text>
-              <View style={styles.quantityContainer}>
-                <TouchableOpacity
-                  onPress={() => updateQuantity(item.id, false)}
-                  style={styles.quantityButton}
-                >
-                  <Text style={styles.quantityButtonText}>-</Text>
-                </TouchableOpacity>
-                <Text style={styles.quantityText}>{item.quantity}</Text>
-                <TouchableOpacity
-                  onPress={() => updateQuantity(item.id, true)}
-                  style={styles.quantityButton}
-                >
-                  <Text style={styles.quantityButtonText}>+</Text>
-                </TouchableOpacity>
+      ) : (
+        <>
+          <Text style={styles.sectionTitle}>Aliments choisis</Text>
+          <FlatList
+            data={mealItems}
+            renderItem={({ item }) => (
+              <View style={styles.mealItem}>
+                <Image source={{ uri: item.image }} style={styles.mealImage} />
+                <View style={styles.mealInfo}>
+                  <Text>
+                    {item.name} - {item.calories * item.quantity} kcal
+                  </Text>
+                  <View style={styles.quantityContainer}>
+                    <TouchableOpacity
+                      onPress={() => updateQuantity(item.id, false)}
+                      style={styles.quantityButton}
+                    >
+                      <Text style={styles.quantityButtonText}>-</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.quantityText}>{item.quantity}</Text>
+                    <TouchableOpacity
+                      onPress={() => updateQuantity(item.id, true)}
+                      style={styles.quantityButton}
+                    >
+                      <Text style={styles.quantityButtonText}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </View>
-            </View>
-          </View>
-        )}
-        keyExtractor={(item) => item.id.toString()}
-        style={styles.flatList}
-      />
+            )}
+            keyExtractor={(item) => item.id.toString()}
+            style={[styles.flatList, styles.mealList]}
+          />
+        </>
+      )}
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
           <Text style={styles.imagePickerText}>Ajouter une photo</Text>
@@ -225,12 +234,6 @@ const AddMealScreen = () => {
       {image && <Image source={{ uri: image }} style={styles.image} />}
       <TouchableOpacity style={styles.addButton} onPress={handleAddMeal}>
         <Text style={styles.addButtonText}>Ajouter le repas</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.scanButton}
-        onPress={() => router.push("/camera")}
-      >
-        <Text style={styles.scanButtonText}>Scanner un code-barres</Text>
       </TouchableOpacity>
     </View>
   );
@@ -282,6 +285,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
+  scanButton: {
+    backgroundColor: "#4CAF50",
+    padding: 12,
+    borderRadius: 8,
+    marginLeft: 8,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
@@ -290,6 +299,9 @@ const styles = StyleSheet.create({
   },
   flatList: {
     marginBottom: 12,
+  },
+  mealList: {
+    flex: 1,
   },
   buttonContainer: {
     flexDirection: "row",
@@ -381,18 +393,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   addButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  scanButton: {
-    backgroundColor: "#FF5722",
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  scanButtonText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
