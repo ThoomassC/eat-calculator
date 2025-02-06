@@ -53,6 +53,17 @@ export default function AuthRoutesLayout() {
           ),
         }}
       />
+      <Stack.Screen
+        name="[id]"
+        options={{
+          title: "Détail d'un repas",
+          headerRight: () => (
+            <TouchableOpacity onPress={handleSignOut} style={{ padding: 8 }}>
+              <Ionicons name="log-out-outline" size={24} color="black" />
+            </TouchableOpacity>
+          ),
+        }}
+      />
     </Stack>
   );
 }
