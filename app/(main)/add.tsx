@@ -195,7 +195,19 @@ const AddMealScreen = () => {
             data={mealItems}
             renderItem={({ item }) => (
               <View style={styles.mealItem}>
-                <Image source={{ uri: item.image }} style={styles.mealImage} />
+                {item.image ? (
+                  <Image
+                    source={{ uri: item.image }}
+                    style={styles.mealImage}
+                  />
+                ) : (
+                  <Ionicons
+                    name="image-outline"
+                    size={50}
+                    color="#ccc"
+                    style={styles.defaultFoodImage}
+                  />
+                )}
                 <View style={styles.mealInfo}>
                   <Text>
                     {item.name} - {item.calories * item.quantity} kcal
@@ -362,6 +374,14 @@ const styles = StyleSheet.create({
     height: 50,
     marginRight: 10,
     borderRadius: 8,
+  },
+  defaultFoodImage: {
+    width: 50,
+    height: 50,
+    marginRight: 10,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
   },
   mealInfo: {
     flex: 1,
